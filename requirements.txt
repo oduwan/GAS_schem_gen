@@ -1,0 +1,2 @@
+# reportlab is required for PDF generation
+reportlab>=4.0.0
