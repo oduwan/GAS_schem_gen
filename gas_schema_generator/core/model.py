@@ -1,9 +1,12 @@
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Optional, Tuple
+
 import os
-from .config import PHONE_RE, EMAIL_RE
-from .validation import sanitize_str, normalize_phone, field_error, range_error, must_be_float
+from dataclasses import dataclass
+from typing import Optional, Tuple
+
+from .config import EMAIL_RE, PHONE_RE
+from .validation import field_error, must_be_float, normalize_phone, range_error, sanitize_str
+
 
 @dataclass(frozen=True)
 class StaticConfig:

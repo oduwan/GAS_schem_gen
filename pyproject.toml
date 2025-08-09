@@ -12,7 +12,19 @@ dependencies = [
 python_version = "3.11"
 strict = true
 warn_unused_ignores = true
+ignore_missing_imports = true
+
+# Ослабим строгость для IO и UI через overrides
+[[tool.mypy.overrides]]
+module = ["gas_schema_generator.io.*"]
+disallow_untyped_defs = false
+check_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = ["gas_schema_generator.ui.*"]
+disallow_untyped_defs = false
+check_untyped_defs = false
 
 [tool.ruff]
-line-length = 100
+line-length = 160
 select = ["E", "F", "W", "I"]

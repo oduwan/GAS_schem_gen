@@ -1,6 +1,7 @@
 from __future__ import annotations
-from pathlib import Path
+
 import re
+from pathlib import Path
 
 APP_NAME = "GAS Schema Generator (MVI)"
 CONFIG_FILENAME = ".gas_config.json"

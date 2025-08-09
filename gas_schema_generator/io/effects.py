@@ -1,21 +1,25 @@
 from __future__ import annotations
+
 import json
-import os
 import logging
+import os
 from typing import Callable, Optional
-from reportlab.pdfgen import canvas as pdfcanvas
+
 from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas as pdfcanvas
+
 from ..core.config import config_path
-from ..core.model import StaticConfig, AppState
-from ..core.intents import Intent
-from .pdf_drawer import Drawer
 from ..core.domain import select_equipment
+from ..core.intents import Intent
+from ..core.model import AppState, StaticConfig
 from ..infra.logging import setup_logging
+from .pdf_drawer import Drawer
+
 log = logging.getLogger(__name__)
 
 
 
-def effect_load_config(dispatch: Callable[[Intent, object | None], None]):
+def effect_load_config(dispatch: Callable[[Intent, object | None], None]) -> None:
     setup_logging()
     p = config_path()
     cfg: Optional[StaticConfig] = None
@@ -31,18 +35,21 @@ def effect_load_config(dispatch: Callable[[Intent, object | None], None]):
             ok, msg = cfg.validate()
             if not ok:
                 log.warning("Invalid config removed: %s | reason: %s", p, msg)
-                p.unlink(missing_ok=True); cfg = None
+                p.unlink(missing_ok=True)
+                cfg = None
         else:
             log.info("Config not found: %s", p)
     except Exception as e:
         log.exception("Failed to load config: %s", e)
-        try: p.unlink(missing_ok=True)
-        except Exception: pass
+        try:
+            p.unlink(missing_ok=True)
+        except Exception:
+            pass
         cfg = None
     dispatch(Intent.CONFIG_LOADED, cfg)
 
 
-def effect_save_config(cfg: StaticConfig, dispatch: Callable[[Intent, object | None], None]):
+def effect_save_config(cfg: StaticConfig, dispatch: Callable[[Intent, object | None], None]) -> None:
     setup_logging()
     try:
         ok, msg = cfg.validate()
@@ -62,7 +69,7 @@ def effect_save_config(cfg: StaticConfig, dispatch: Callable[[Intent, object | N
         dispatch(Intent.SETTINGS_SAVED, (False, f"Nepavyko išsaugoti nustatymų: {e}"))
 
 
-def effect_generate_pdf(state: AppState, dispatch: Callable[[Intent, object | None], None]):
+def effect_generate_pdf(state: AppState, dispatch: Callable[[Intent, object | None], None]) -> None:
     setup_logging()
     assert state.config is not None
     dyn = state.dyn

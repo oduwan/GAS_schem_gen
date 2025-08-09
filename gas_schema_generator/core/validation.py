@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import re
 
 _WS = re.compile(r"\s+")

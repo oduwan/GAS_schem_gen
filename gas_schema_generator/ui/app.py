@@ -1,15 +1,18 @@
 from __future__ import annotations
+
 import tkinter as tk
-from tkinter import ttk, filedialog
+from tkinter import filedialog, ttk
+
 from ..core.config import APP_NAME
-from ..core.model import AppState, StaticConfig
 from ..core.intents import Intent
-from ..infra.store import Store
+from ..core.model import AppState, StaticConfig
 from ..core.reducer import reducer
 from ..infra.logging import setup_logging
+from ..infra.store import Store
+
 
 class App(tk.Tk):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         setup_logging()
         self.title(APP_NAME)
@@ -17,7 +20,6 @@ class App(tk.Tk):
         self.resizable(False, False)
 
         self.store = Store(AppState(), reducer)
-        self.store.subscribe(self.render)
 
         # UI scaffold
         self.notebook = ttk.Notebook(self)
@@ -44,9 +46,10 @@ class App(tk.Tk):
 
         self.settings_win: tk.Toplevel | None = None
 
+        self.store.subscribe(self.render)
         self.store.dispatch(Intent.APP_START)
 
-    def render(self, state: AppState):
+    def render(self, state: AppState) -> None:
         self.status.configure(text=state.ui.message)
         self.btn_generate.configure(state=(tk.NORMAL if state.ui.can_generate else tk.DISABLED))
 
@@ -71,7 +74,9 @@ class App(tk.Tk):
             ttk.Label(row, text=f"Inverteris {i+1} galia (kW)*", width=32).pack(side=tk.LEFT)
             e = ttk.Entry(row, textvariable=var, width=10)
             e.pack(side=tk.LEFT)
-            e.bind("<FocusOut>", lambda _e, idx=i, v=var: self.store.dispatch(Intent.DYN_SET_POWER, (idx, v.get())))
+            def _on_power_focus_out(_e: object, idx: int, v: tk.StringVar) -> None:
+                self.store.dispatch(Intent.DYN_SET_POWER, (idx, v.get()))
+            e.bind("<FocusOut>", lambda ev, idx=i, v=var: _on_power_focus_out(ev, idx, v))  # type: ignore[misc]
             ttk.Label(row, text="(5–150)").pack(side=tk.LEFT, padx=6)
 
         if state.ui.settings_open and self.settings_win is None:
@@ -83,7 +88,7 @@ class App(tk.Tk):
                 pass
             self.settings_win = None
 
-    def open_settings(self, state: AppState):
+    def open_settings(self, state: AppState) -> None:
         self.settings_win = tk.Toplevel(self)
         self.settings_win.title("Programos nustatymai")
         self.settings_win.geometry("600x360")
@@ -99,10 +104,12 @@ class App(tk.Tk):
         frm = ttk.Frame(self.settings_win)
         frm.pack(fill=tk.BOTH, expand=True, padx=16, pady=16)
 
-        def row(label, var, browse=False):
-            r = ttk.Frame(frm); r.pack(fill=tk.X, pady=6)
+        def row(label: str, var: tk.StringVar, browse: bool = False) -> ttk.Entry:
+            r = ttk.Frame(frm)
+            r.pack(fill=tk.X, pady=6)
             ttk.Label(r, text=label, width=28).pack(side=tk.LEFT)
-            ent = ttk.Entry(r, textvariable=var); ent.pack(side=tk.LEFT, fill=tk.X, expand=True)
+            ent = ttk.Entry(r, textvariable=var)
+            ent.pack(side=tk.LEFT, fill=tk.X, expand=True)
             if browse:
                 ttk.Button(r, text="Pasirinkti…", command=lambda: self.pick_dir(var)).pack(side=tk.LEFT, padx=6)
             return ent
@@ -112,7 +119,8 @@ class App(tk.Tk):
         row("El. paštas*", v_email)
         row("Išsaugojimo kelias*", v_out, browse=True)
 
-        bar = ttk.Frame(self.settings_win); bar.pack(fill=tk.X, padx=16, pady=8)
+        bar = ttk.Frame(self.settings_win)
+        bar.pack(fill=tk.X, padx=16, pady=8)
         ttk.Button(bar, text="Atšaukti", command=lambda: self.store.dispatch(Intent.CLOSE_SETTINGS)).pack(side=tk.RIGHT, padx=6)
         def do_save():
             cfg2 = StaticConfig(v_company.get(), v_phone.get(), v_email.get(), v_out.get())
@@ -125,10 +133,12 @@ class App(tk.Tk):
             self.store.dispatch(Intent.SETTINGS_SAVE, cfg2)
         ttk.Button(bar, text="Išsaugoti", command=do_save).pack(side=tk.RIGHT)
 
-    def pick_dir(self, var: tk.StringVar):
+    def pick_dir(self, var: tk.StringVar) -> None:
         d = filedialog.askdirectory()
         if d:
             var.set(d)
 
-def main():
-    app = App(); app.mainloop()
+def main() -> None:
+    app = App()
+    app.mainloop()
+

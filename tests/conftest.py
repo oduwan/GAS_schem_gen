@@ -1,4 +1,8 @@
-import shutil, tempfile, pytest
+import shutil
+import tempfile
+
+import pytest
+
 
 @pytest.fixture()
 def tempdir():

@@ -1,5 +1,6 @@
 from __future__ import annotations
-from .effects import effect_load_config, effect_save_config, effect_generate_pdf
+
+from .effects import effect_generate_pdf, effect_load_config, effect_save_config
 from .pdf_drawer import Drawer
 
 __all__ = [

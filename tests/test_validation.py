@@ -1,4 +1,5 @@
-from gas_schema_generator.core.model import StaticConfig, DynamicParams
+from gas_schema_generator.core.model import DynamicParams, StaticConfig
+
 
 def test_static_ok(tmp_path):
     ok, msg = StaticConfig("ACME", "+370 600 00000", "a@b.lt", str(tmp_path)).validate()

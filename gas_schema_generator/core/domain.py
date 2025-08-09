@@ -1,4 +1,8 @@
 from __future__ import annotations
+
+from .config import BREAKER_SET, CT_SET, MCCB_SET
+from .model import Selection
+
 """Domain calculations per spec.
 
 Formulas:
@@ -10,9 +14,6 @@ Formulas:
   where I_inv = (Pmax_kW * 1000 * 1.15) / (230 * 3)  # per spec note
 - Main breaker: direct→BREAKER_SET, CT→MCCB_SET; CT rating from CT_SET.
 """
-from .config import BREAKER_SET, MCCB_SET, CT_SET
-from .model import Selection
-
 
 def ceil_to_set(value: float, options: list[int]) -> int:
     for o in options:

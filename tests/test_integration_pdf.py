@@ -1,6 +1,7 @@
-from gas_schema_generator.core.model import AppState, StaticConfig, DynamicParams
 from gas_schema_generator.core.intents import Intent
+from gas_schema_generator.core.model import AppState, DynamicParams, StaticConfig
 from gas_schema_generator.core.reducer import reducer
+
 
 def test_generate_pdf(tmp_path):
     st = AppState(
