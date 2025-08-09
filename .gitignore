@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtualenv
+.venv/
+venv/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# IDE/editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test & coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Type checkers / linters
+.mypy_cache/
+.ruff_cache/
+.pyright/
+
+# Tox / Nox (если используешь)
+.tox/
+.nox/
+
+# Reports / logs
+*.log
+
+# Generated PDFs (если не хочешь коммитить выходные файлы)
+# ИСКЛЮЧАЕМ любые PDF, но оставляем документацию в docs/
+*.pdf
+!docs/**/*.pdf
