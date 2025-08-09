@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from typing import Optional, Tuple
 import os
 from .config import PHONE_RE, EMAIL_RE
+from .validation import sanitize_str, normalize_phone, field_error, range_error, must_be_float
 
 @dataclass(frozen=True)
 class StaticConfig:
@@ -11,15 +12,24 @@ class StaticConfig:
     email: str = ""
     output_dir: str = ""
 
+    def cleaned(self) -> "StaticConfig":
+        return StaticConfig(
+            company_name=sanitize_str(self.company_name),
+            phone=normalize_phone(self.phone),
+            email=sanitize_str(self.email),
+            output_dir=sanitize_str(self.output_dir),
+        )
+
     def validate(self) -> tuple[bool, str]:
-        if not self.company_name.strip():
-            return False, "Organizacijos pavadinimas yra privalomas."
-        if not PHONE_RE.match(self.phone.strip()):
-            return False, "Telefono numerio formatas neteisingas."
-        if not EMAIL_RE.match(self.email.strip()):
-            return False, "El. pašto formatas neteisingas."
-        if not self.output_dir or not os.path.isdir(self.output_dir):
-            return False, "Neteisingas išsaugojimo kelias."
+        c = self.cleaned()
+        if not c.company_name:
+            return False, field_error("Organizacija", "privalomas laukas")
+        if not PHONE_RE.match(c.phone):
+            return False, field_error("Telefonas", "neteisingas formatas")
+        if not EMAIL_RE.match(c.email):
+            return False, field_error("El. paštas", "neteisingas formatas")
+        if not c.output_dir or not os.path.isdir(c.output_dir):
+            return False, field_error("Kelias", "neteisingas arba nepasiekiamas")
         return True, ""
 
 @dataclass(frozen=True)
@@ -29,16 +39,16 @@ class DynamicParams:
 
     def validate(self) -> tuple[bool, str]:
         if not (1 <= self.inverter_count <= 3):
-            return False, "Inverterių skaičius turi būti 1..3."
+            return False, range_error("Inverterių skaičius", 1, 3)
         if len(self.inverter_powers_kw) != self.inverter_count:
-            return False, "Nurodykite galią kiekvienam inverteriui."
-        for p in self.inverter_powers_kw:
+            return False, field_error("Galia", "nurodykite kiekvienam inverteriui")
+        for idx, p in enumerate(self.inverter_powers_kw, 1):
             try:
                 v = float(p)
             except Exception:
-                return False, "Galia turi būti skaičius."
+                return False, must_be_float(f"Inverteris {idx} galia")
             if not (5 <= v <= 150):
-                return False, "Kiekvieno inverterio galia turi būti 5..150 kW."
+                return False, range_error(f"Inverteris {idx} galia (kW)", 5, 150)
         return True, ""
 
 @dataclass(frozen=True)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 import json
 import os
+import logging
 from typing import Callable, Optional
 from reportlab.pdfgen import canvas as pdfcanvas
 from reportlab.lib.pagesizes import A4
@@ -9,13 +10,17 @@ from ..core.model import StaticConfig, AppState
 from ..core.intents import Intent
 from .pdf_drawer import Drawer
 from ..core.domain import select_equipment
+from ..infra.logging import setup_logging
+log = logging.getLogger(__name__)
+
 
 
 def effect_load_config(dispatch: Callable[[Intent, object | None], None]):
-    cfg: Optional[StaticConfig] = None
+    setup_logging()
     p = config_path()
-    if p.exists():
-        try:
+    cfg: Optional[StaticConfig] = None
+    try:
+        if p.exists():
             data = json.loads(p.read_text(encoding="utf-8"))
             cfg = StaticConfig(
                 company_name=data.get("company_name", ""),
@@ -23,20 +28,22 @@ def effect_load_config(dispatch: Callable[[Intent, object | None], None]):
                 email=data.get("email", ""),
                 output_dir=data.get("output_dir", ""),
             )
-            ok, _ = cfg.validate()
+            ok, msg = cfg.validate()
             if not ok:
-                p.unlink(missing_ok=True)
-                cfg = None
-        except Exception:
-            try:
-                p.unlink(missing_ok=True)
-            except Exception:
-                pass
-            cfg = None
+                log.warning("Invalid config removed: %s | reason: %s", p, msg)
+                p.unlink(missing_ok=True); cfg = None
+        else:
+            log.info("Config not found: %s", p)
+    except Exception as e:
+        log.exception("Failed to load config: %s", e)
+        try: p.unlink(missing_ok=True)
+        except Exception: pass
+        cfg = None
     dispatch(Intent.CONFIG_LOADED, cfg)
 
 
 def effect_save_config(cfg: StaticConfig, dispatch: Callable[[Intent, object | None], None]):
+    setup_logging()
     try:
         ok, msg = cfg.validate()
         if not ok:
@@ -48,12 +55,15 @@ def effect_save_config(cfg: StaticConfig, dispatch: Callable[[Intent, object | N
             "email": cfg.email,
             "output_dir": cfg.output_dir,
         }, ensure_ascii=False, indent=2), encoding="utf-8")
+        log.info("Config saved: %s", p)
         dispatch(Intent.SETTINGS_SAVED, (True, ""))
     except Exception as e:
-        dispatch(Intent.SETTINGS_SAVED, (False, str(e)))
+        log.exception("Failed to save config: %s", e)
+        dispatch(Intent.SETTINGS_SAVED, (False, f"Nepavyko išsaugoti nustatymų: {e}"))
 
 
 def effect_generate_pdf(state: AppState, dispatch: Callable[[Intent, object | None], None]):
+    setup_logging()
     assert state.config is not None
     dyn = state.dyn
     sel = select_equipment(dyn.inverter_powers_kw)
@@ -62,6 +72,8 @@ def effect_generate_pdf(state: AppState, dispatch: Callable[[Intent, object | No
     try:
         c = pdfcanvas.Canvas(out_path, pagesize=A4)
         Drawer(c).draw_schema(state.config, dyn, sel, out_path)
+        log.info("PDF generated: %s", out_path)
         dispatch(Intent.GENERATED, (True, out_path))
     except Exception as e:
-        dispatch(Intent.GENERATED, (False, str(e)))
+        log.exception("PDF generation failed: %s", e)
+        dispatch(Intent.GENERATED, (False, f"PDF generavimo klaida: {e}"))

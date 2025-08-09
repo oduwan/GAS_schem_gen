@@ -6,10 +6,12 @@ from ..core.model import AppState, StaticConfig
 from ..core.intents import Intent
 from ..infra.store import Store
 from ..core.reducer import reducer
+from ..infra.logging import setup_logging
 
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
+        setup_logging()
         self.title(APP_NAME)
         self.geometry("720x560")
         self.resizable(False, False)
