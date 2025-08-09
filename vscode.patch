@@ -1,0 +1,23 @@
+*** Add File: gas_schema_generator/core/validation.py
++from __future__ import annotations
++import re
++
++_WS = re.compile(r"\s+")
++
++def sanitize_str(s: str) -> str:
++    return _WS.sub(" ", s or "").strip()
++
++def normalize_phone(s: str) -> str:
++    # Paliekame tik + ir skaitmenis
++    return re.sub(r"[^+\d]", "", s or "")
++
++def field_error(field: str, msg: str) -> str:
++    return f"[{field}] {msg}"
++
++def range_error(field: str, lo: float, hi: float) -> str:
++    return field_error(field, f"turi būti {lo}..{hi}")
++
++def must_be_float(field: str) -> str:
++    return field_error(field, "turi būti skaičius")
++
+*** End Patch
