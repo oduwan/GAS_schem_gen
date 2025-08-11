@@ -7,6 +7,8 @@ from typing import Optional, Tuple
 from .config import EMAIL_RE, PHONE_RE
 from .validation import field_error, must_be_float, normalize_phone, range_error, sanitize_str
 
+_SUPPORTED_LANGS = {"lt", "ru", "en"}
+
 
 @dataclass(frozen=True)
 class StaticConfig:
@@ -14,13 +16,16 @@ class StaticConfig:
     phone: str = ""
     email: str = ""
     output_dir: str = ""
+    lang: str = "lt"
 
     def cleaned(self) -> "StaticConfig":
+        code = self.lang if self.lang in _SUPPORTED_LANGS else "lt"
         return StaticConfig(
             company_name=sanitize_str(self.company_name),
             phone=normalize_phone(self.phone),
             email=sanitize_str(self.email),
             output_dir=sanitize_str(self.output_dir),
+            lang=code,
         )
 
     def validate(self) -> tuple[bool, str]:
@@ -33,6 +38,8 @@ class StaticConfig:
             return False, field_error("El. paštas", "neteisingas formatas")
         if not c.output_dir or not os.path.isdir(c.output_dir):
             return False, field_error("Kelias", "neteisingas arba nepasiekiamas")
+        if c.lang not in _SUPPORTED_LANGS:
+            return False, field_error("Kalba", "nepalaikoma (lt/ru/en)")
         return True, ""
 
 @dataclass(frozen=True)

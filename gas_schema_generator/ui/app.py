@@ -3,10 +3,10 @@ from __future__ import annotations
 import tkinter as tk
 from tkinter import filedialog, ttk
 
-from ..core.config import APP_NAME
 from ..core.intents import Intent
 from ..core.model import AppState, StaticConfig
 from ..core.reducer import reducer
+from ..infra.l10n import t
 from ..infra.logging import setup_logging
 from ..infra.store import Store
 
@@ -15,7 +15,8 @@ class App(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
         setup_logging()
-        self.title(APP_NAME)
+        self.lang = "lt"
+        self.title(t("title", self.lang))
         self.geometry("720x560")
         self.resizable(False, False)
 
@@ -33,9 +34,9 @@ class App(tk.Tk):
         # top bar
         self.bar = ttk.Frame(self)
         self.bar.pack(fill=tk.X, padx=12, pady=8)
-        self.btn_settings = ttk.Button(self.bar, text="Nustatymai", command=lambda: self.store.dispatch(Intent.OPEN_SETTINGS))
+        self.btn_settings = ttk.Button(self.bar, text=t("settings", self.lang), command=lambda: self.store.dispatch(Intent.OPEN_SETTINGS))
         self.btn_settings.pack(side=tk.LEFT)
-        self.btn_generate = ttk.Button(self.bar, text="Išsaugoti PDF", command=lambda: self.store.dispatch(Intent.GENERATE))
+        self.btn_generate = ttk.Button(self.bar, text=t("export_to_pdf", self.lang), command=lambda: self.store.dispatch(Intent.GENERATE))
         self.btn_generate.pack(side=tk.RIGHT)
 
         self.inv_count_var = tk.IntVar(value=1)
@@ -50,6 +51,8 @@ class App(tk.Tk):
         self.store.dispatch(Intent.APP_START)
 
     def render(self, state: AppState) -> None:
+        if state.config is not None:
+            self.lang = state.config.lang
         self.status.configure(text=state.ui.message)
         self.btn_generate.configure(state=(tk.NORMAL if state.ui.can_generate else tk.DISABLED))
 
@@ -57,7 +60,7 @@ class App(tk.Tk):
             w.destroy()
         row1 = ttk.Frame(self.dynamic_wrapper)
         row1.pack(fill=tk.X, pady=6)
-        ttk.Label(row1, text="Inverterių skaičius (1..3)*", width=32).pack(side=tk.LEFT)
+        ttk.Label(row1, text=t("inv_count", self.lang), width=32).pack(side=tk.LEFT)
         spin = ttk.Spinbox(row1, from_=1, to=3, textvariable=self.inv_count_var, width=5,
                            command=lambda: self.store.dispatch(Intent.DYN_SET_COUNT, int(self.inv_count_var.get())))
         self.inv_count_var.set(state.dyn.inverter_count)
@@ -71,13 +74,13 @@ class App(tk.Tk):
             self.power_vars.append(var)
             row = ttk.Frame(powers_frame)
             row.pack(fill=tk.X, pady=4)
-            ttk.Label(row, text=f"Inverteris {i+1} galia (kW)*", width=32).pack(side=tk.LEFT)
+            ttk.Label(row, text=t("inv_power", self.lang).format(n=i+1), width=32).pack(side=tk.LEFT)
             e = ttk.Entry(row, textvariable=var, width=10)
             e.pack(side=tk.LEFT)
             def _on_power_focus_out(_e: object, idx: int, v: tk.StringVar) -> None:
                 self.store.dispatch(Intent.DYN_SET_POWER, (idx, v.get()))
             e.bind("<FocusOut>", lambda ev, idx=i, v=var: _on_power_focus_out(ev, idx, v))  # type: ignore[misc]
-            ttk.Label(row, text="(5–150)").pack(side=tk.LEFT, padx=6)
+            ttk.Label(row, text=t("inv_power_range", self.lang)).pack(side=tk.LEFT, padx=6)
 
         if state.ui.settings_open and self.settings_win is None:
             self.open_settings(state)
@@ -90,7 +93,7 @@ class App(tk.Tk):
 
     def open_settings(self, state: AppState) -> None:
         self.settings_win = tk.Toplevel(self)
-        self.settings_win.title("Programos nustatymai")
+        self.settings_win.title(t("settings", self.lang))
         self.settings_win.geometry("600x360")
         self.settings_win.transient(self)
         self.settings_win.grab_set()
@@ -111,7 +114,7 @@ class App(tk.Tk):
             ent = ttk.Entry(r, textvariable=var)
             ent.pack(side=tk.LEFT, fill=tk.X, expand=True)
             if browse:
-                ttk.Button(r, text="Pasirinkti…", command=lambda: self.pick_dir(var)).pack(side=tk.LEFT, padx=6)
+                ttk.Button(r, text=t("chose", self.lang), command=lambda: self.pick_dir(var)).pack(side=tk.LEFT, padx=6)
             return ent
 
         row("Organizacijos pavadinimas*", v_company)
@@ -121,7 +124,7 @@ class App(tk.Tk):
 
         bar = ttk.Frame(self.settings_win)
         bar.pack(fill=tk.X, padx=16, pady=8)
-        ttk.Button(bar, text="Atšaukti", command=lambda: self.store.dispatch(Intent.CLOSE_SETTINGS)).pack(side=tk.RIGHT, padx=6)
+        ttk.Button(bar, text=t("cancel", self.lang), command=lambda: self.store.dispatch(Intent.CLOSE_SETTINGS)).pack(side=tk.RIGHT, padx=6)
         def do_save():
             cfg2 = StaticConfig(v_company.get(), v_phone.get(), v_email.get(), v_out.get())
             self.store.dispatch(Intent.SETTINGS_EDIT, {
@@ -131,7 +134,7 @@ class App(tk.Tk):
                 "output_dir": cfg2.output_dir,
             })
             self.store.dispatch(Intent.SETTINGS_SAVE, cfg2)
-        ttk.Button(bar, text="Išsaugoti", command=do_save).pack(side=tk.RIGHT)
+        ttk.Button(bar, text=t("save", self.lang), command=do_save).pack(side=tk.RIGHT)
 
     def pick_dir(self, var: tk.StringVar) -> None:
         d = filedialog.askdirectory()

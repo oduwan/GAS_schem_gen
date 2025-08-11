@@ -28,3 +28,7 @@ check_untyped_defs = false
 [tool.ruff]
 line-length = 160
 select = ["E", "F", "W", "I"]
+
+[tool.setuptools.package-data]
+"gas_schema_generator.locales" = ["*.json"]
+"gas_schema_generator.labels" = ["*.json"]

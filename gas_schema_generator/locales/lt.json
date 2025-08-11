@@ -1,0 +1,22 @@
+{
+  "title": "GAS schemų generatorius",
+  "settings": "Nustatymai",
+  "org_name": "Organizacijos pavadinimas",
+  "phone": "Telefono numeris",
+  "email": "El. paštas",
+  "save_dir": "Išsaugojimo katalogas",
+
+    
+  "inv_count": "Keitiklių skaičius (1–3)",
+  "inv_power": "Keitiklio {n} galia (kW)*",
+  "inv_power_range": "(5–150)",
+
+  "status_ready": "PDF paruoštas",
+  "err_dyn_params": "Patikrinkite dinamiškus parametrus.",
+  "err_static_params": "Pataisykite nustatymus.",
+
+  "chose": "Pasirinkite...",
+  "save": "Išsaugoti",
+  "cancel": "Atšaukti",
+  "export_to_pdf" : "Išsaugoti PDF"
+}

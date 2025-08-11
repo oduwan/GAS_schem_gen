@@ -7,6 +7,7 @@ from reportlab.lib.pagesizes import A4
 
 from ..core.config import ICON, PADDING
 from ..core.model import DynamicParams, Selection, StaticConfig
+from ..infra.l10n import get_pdf_label
 
 Canvas = Any  # reportlab neturi tipų — laikom kaip Any
 
@@ -34,10 +35,10 @@ class Drawer:
         return float((self.page_w - width) / 2.0)
 
     def draw_schema(self, company: StaticConfig, dyn: DynamicParams, sel: Selection, out_path: str) -> None:
-        self.c.setTitle("GAS schema")
+        self.c.setTitle(get_pdf_label("pdf_title", company.lang))
         margin = 25
         self.c.setFont("Helvetica-Bold", 12)
-        self.c.drawCentredString(self.page_w / 2, self.page_h - margin, f"GAS schema (Pmax={sel.pmax_kw:.1f} kW)")
+        self.c.drawCentredString(self.page_w / 2, self.page_h - margin, get_pdf_label("pdf_header", company.lang).format(P = f"{sel.pmax_kw:.3f}"))
         self.c.setFont("Helvetica", 9)
         self.c.drawCentredString(
             self.page_w / 2,
@@ -51,21 +52,20 @@ class Drawer:
         # PS
         ps_x = center - ICON / 2
         ps_y = y
-        self.draw_box(ps_x, ps_y, ICON, label="PS")
+        self.draw_box(ps_x, ps_y, ICON, label=get_pdf_label("ps", company.lang))
 
         # GAS inner blocks
         inner_labels: list[str] = []
         if sel.direct_metering:
-            inner_labels += [f"Įv. automatas {sel.main_breaker_a} A", "Skaitiklis"]
+            inner_labels += [get_pdf_label("direct_meter", company.lang)]
+            inner_labels += [get_pdf_label("main_breaker_fmt", company.lang).format(a=sel.main_breaker_a)]
         else:
-            inner_labels += [
-                f"MCCB {sel.main_breaker_a} A",
-                f"TT {sel.ct_rating_a} A",
-                "Mat. gnybtai",
-                "Skaitiklis",
-            ]
+            inner_labels += [get_pdf_label("mccb_fmt", company.lang).format(a=sel.main_breaker_a)]
+            inner_labels += [get_pdf_label("ct_fmt", company.lang).format(a=sel.ct_rating_a)]
+            inner_labels += [get_pdf_label("meas_terminals", company.lang)]
+            inner_labels += [get_pdf_label("meter", company.lang)]
         for i in range(dyn.inverter_count):
-            inner_labels.append(f"Automatas {i+1}: {sel.per_inv_breaker_a} A")
+            inner_labels.append(get_pdf_label("per_inverter_breaker", company.lang).format(n=i+1, a=sel.per_inv_breaker_a))
 
         cols = 2
         rows = (len(inner_labels) + cols - 1) // cols
@@ -78,7 +78,7 @@ class Drawer:
         self.c.setStrokeColor(colors.black)
         self.c.rect(gas_x, gas_y, gas_w, gas_h)
         self.c.setFont("Helvetica-Bold", 10)
-        self.c.drawCentredString(gas_x + gas_w / 2, gas_y + gas_h + 6, "GAS")
+        self.c.drawCentredString(gas_x + gas_w / 2, gas_y + gas_h + 6, get_pdf_label("gas", company.lang))
 
         # 36×36 blocks inside GAS
         self.c.setFont("Helvetica", 8)
@@ -102,7 +102,7 @@ class Drawer:
             x = start_x + i * (ICON + PADDING)
             self.c.rect(x, invs_y, ICON, ICON)
             self.c.setFont("Helvetica", 8)
-            self.c.drawCentredString(x + ICON / 2, invs_y + ICON + 4, f"KEITIKLIS {i+1}")
+            self.c.drawCentredString(x + ICON / 2, invs_y + ICON + 4, get_pdf_label("inv_n", company.lang).format(n=i+1))
             self.c.drawCentredString(x + ICON / 2, invs_y - 10, f"{dyn.inverter_powers_kw[i]} kW")
             centers.append(x + ICON / 2)
 
@@ -116,13 +116,16 @@ class Drawer:
             self.vline(center, bus_y, gas_y)
 
         # footer notes
+        footer = get_pdf_label("footer_direct", company.lang) if sel.direct_metering else get_pdf_label("footer_ct", company.lang)
         self.c.setFont("Helvetica", 8)
+        self.c.drawString (30, 40, footer)
         self.c.drawString(
-            30, 40, f"Schema: {'Tiesioginis skaitiklis' if sel.direct_metering else 'Matavimo transformatoriai'}"
+            30, 28,
+            get_pdf_label("footer_inv_breakers_fmt", company.lang).format(
+                main_a=sel.main_breaker_a, per_a=sel.per_inv_breaker_a
+            ),
         )
-        self.c.drawString(30, 28, f"Įvado apsauga: {sel.main_breaker_a} A; Inverterių automatai: {sel.per_inv_breaker_a} A")
         if not sel.direct_metering and sel.ct_rating_a is not None:
-            self.c.drawString(30, 16, f"TT nominalas: {sel.ct_rating_a} A")
-
+            self.c.drawString(30, 16, get_pdf_label("footer_ct_rating_fmt", company.lang).format(ct_a=sel.ct_rating_a))
         self.c.showPage()
         self.c.save()

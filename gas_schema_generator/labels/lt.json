@@ -1,0 +1,19 @@
+{
+  "pdf_title": "GAS schema",
+  "pdf_header": "GAS schema (Pmax={P} kW)",
+  "ps": "PS",
+  "gas": "GAS",
+  "inverter": "KEITIKLIS",
+  "inv_n": "KEITIKLIS {n}",
+  "direct_meter": "Skaitiklis (tiesioginis)",
+  "meas_terminals": "Mat. gnybtai",
+  "meter": "Skaitiklis",
+  "mccb_fmt": "MCCB {a} A",
+  "main_breaker_fmt": "Įv. automatas: {a} A",
+  "ct_fmt": "TT: {a} A",
+  "per_inv_breaker": "QF{n} 3P C{a}A",
+  "footer_direct": "Schema: Tiesioginis skaitiklis",
+  "footer_ct": "Schema: Matavimo transformatoriai",
+  "footer_inv_breakers_fmt": "Įvado apsauga: {main_a} A; Inverterių automatai: {per_a} A",
+  "footer_ct_rating_fmt": "TT nominalas: {ct_a} A"
+}

@@ -31,6 +31,7 @@ def effect_load_config(dispatch: Callable[[Intent, object | None], None]) -> Non
                 phone=data.get("phone", ""),
                 email=data.get("email", ""),
                 output_dir=data.get("output_dir", ""),
+                lang=data.get("lang", "lt"),
             )
             ok, msg = cfg.validate()
             if not ok:
@@ -61,6 +62,7 @@ def effect_save_config(cfg: StaticConfig, dispatch: Callable[[Intent, object | N
             "phone": cfg.phone,
             "email": cfg.email,
             "output_dir": cfg.output_dir,
+            "lang": cfg.lang,
         }, ensure_ascii=False, indent=2), encoding="utf-8")
         log.info("Config saved: %s", p)
         dispatch(Intent.SETTINGS_SAVED, (True, ""))
